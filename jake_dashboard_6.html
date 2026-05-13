@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jake's Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --accent3: #47d4ff;
+    --text: #f0f0f0;
+    --muted: #6b6b8a;
+    --green: #4cff8f;
+    --red: #ff4c6b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  header {
+    padding: 28px 40px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .logo span { color: var(--muted); font-size: 1rem; display: block; letter-spacing: 6px; font-family: 'DM Sans', sans-serif; font-weight: 300; margin-top: 2px; }
+
+  .date-display {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .date-display .time { color: var(--accent); font-size: 1.4rem; font-weight: 600; }
+
+  /* NAV TABS */
+  nav {
+    display: flex;
+    gap: 4px;
+    padding: 24px 40px 0;
+    border-bottom: 1px solid var(--border);
+    margin: 0 0 0;
+  }
+
+  nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  nav button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  nav button:hover:not(.active) { color: var(--text); }
+
+  /* MAIN CONTENT */
+  main { padding: 32px 40px 60px; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* GRID LAYOUTS */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .grid-auto { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,255,71,0.3), transparent);
+  }
+
+  .card-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .card-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .card-sub { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+
+  .card-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin: 12px 0; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+  .progress-label span:last-child { font-family: 'JetBrains Mono', monospace; color: var(--text); }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+  .fill-yellow { background: var(--accent); }
+  .fill-orange { background: var(--accent2); }
+  .fill-blue { background: var(--accent3); }
+  .fill-green { background: var(--green); }
+
+  /* CALORIE TRACKER */
+  .cal-ring-wrap { display: flex; align-items: center; gap: 28px; margin-bottom: 20px; }
+  .cal-ring { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+  .cal-ring svg { transform: rotate(-90deg); }
+  .cal-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .cal-ring-center .val { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--accent); line-height: 1; }
+  .cal-ring-center .lbl { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .cal-details { flex: 1; }
+
+  /* INPUT STYLING */
+  .input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  input[type="number"], input[type="text"], textarea, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  input[type="number"] { width: 90px; }
+  input[type="text"], textarea { width: 100%; }
+  select { width: 100%; }
+
+  /* BUTTONS */
+  .btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 8px 16px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: #d4eb30; transform: translateY(-1px); }
+  .btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn.secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--surface2); }
+  .btn.danger { background: var(--red); color: #fff; }
+  .btn.small { padding: 5px 10px; font-size: 0.72rem; }
+
+  /* WORKOUT PLAN */
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .day-header:hover { background: var(--surface2); }
+  .day-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 1px; }
+  .day-tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .tag-power { background: rgba(232,255,71,0.15); color: var(--accent); }
+  .tag-hypertrophy { background: rgba(71,212,255,0.15); color: var(--accent3); }
+  .tag-bonus { background: rgba(255,107,53,0.15); color: var(--accent2); }
+  .tag-rest { background: rgba(107,107,138,0.15); color: var(--muted); }
+
+  .day-body { display: none; padding: 0 20px 16px; }
+  .day-body.open { display: block; }
+
+  /* EXERCISE BLOCK */
+  .exercise-block {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+  }
+  .exercise-block:last-child { border-bottom: none; }
+
+  .exercise-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 12px;
+  }
+  .exercise-name { color: var(--text); font-weight: 600; font-size: 0.88rem; }
+  .exercise-meta { font-size: 0.7rem; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+  .exercise-note { color: var(--accent2); font-size: 0.7rem; font-style: italic; margin-top: 2px; }
+
+  /* SET CHECKLIST */
+  .set-checklist {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .set-box {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.6rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    position: relative;
+  }
+  .set-box:hover { border-color: var(--accent); }
+  .set-box.done { background: rgba(232,255,71,0.15); border-color: var(--accent); color: var(--accent); }
+  .set-box.done::after { content: '✓'; font-size: 14px; font-weight: bold; position: absolute; }
+  .set-box .set-num { font-size: 0.55rem; color: var(--muted); position: absolute; top: 3px; left: 5px; }
+  .set-box.done .set-num { color: var(--accent); opacity: 0.6; }
+
+  /* WEIGHT LOG PER EXERCISE */
+  .weight-log-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .weight-log-row input[type="number"] {
+    width: 75px;
+    font-size: 0.78rem;
+    padding: 5px 8px;
+  }
+  .weight-log-row label { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+  .weight-history-mini {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .weight-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .weight-chip .chip-date { color: var(--muted); }
+  .weight-chip .chip-val { color: var(--text); font-weight: 600; }
+  .weight-chip .chip-delta { font-size: 0.6rem; }
+  .weight-chip .chip-delta.up { color: var(--green); }
+  .weight-chip .chip-delta.down { color: var(--red); }
+  .weight-chip .chip-delta.same { color: var(--muted); }
+
+  .exercise-detail { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; }
+
+  /* day complete badge */
+  .day-complete-badge {
+    font-size: 0.65rem;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: rgba(76,255,143,0.15);
+    color: var(--green);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* MEALS */
+  .meal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+  }
+  .meal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .meal-name { font-weight: 600; font-size: 0.9rem; }
+  .meal-cals { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent); }
+  .meal-items { font-size: 0.78rem; color: var(--muted); line-height: 1.8; }
+
+  /* TASKS */
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .task-check.checked { background: var(--accent); border-color: var(--accent); }
+  .task-check.checked::after { content: '✓'; font-size: 10px; color: #000; font-weight: bold; }
+  .task-text { flex: 1; font-size: 0.83rem; }
+  .task-text.done { text-decoration: line-through; color: var(--muted); }
+  .task-priority {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .pri-high { background: rgba(255,76,107,0.2); color: var(--red); }
+  .pri-med { background: rgba(232,255,71,0.15); color: var(--accent); }
+  .pri-low { background: rgba(107,107,138,0.2); color: var(--muted); }
+
+  /* HABIT TRACKER */
+  .habit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .habit-row:last-child { border-bottom: none; }
+  .habit-label { font-size: 0.83rem; font-weight: 500; }
+  .habit-toggle {
+    width: 44px; height: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+  }
+  .habit-toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    background: var(--muted);
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: all 0.3s;
+  }
+  .habit-toggle.on { background: rgba(76,255,143,0.2); border-color: var(--green); }
+  .habit-toggle.on::after { left: 22px; background: var(--green); }
+
+  /* CREATINE */
+  .creatine-status {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .creatine-day { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; color: var(--accent3); line-height: 1; }
+  .creatine-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 3px; color: var(--muted); margin-top: 4px; }
+  .saturation-bar { margin: 20px 0; }
+
+  /* SECTION HEADING */
+  .section-heading {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .section-heading span { color: var(--accent); }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  /* STATS ROW */
+  .stats-row { display: flex; gap: 16px; margin-bottom: 24px; }
+  .stat-box {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .stat-box .val { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--accent); }
+  .stat-box .lbl { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+
+  .accent-line { color: var(--accent); }
+  .orange-line { color: var(--accent2); }
+  .blue-line { color: var(--accent3); }
+
+  /* WEIGHT LOG */
+  .weight-log { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+  .weight-entry { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .weight-entry:last-child { border-bottom: none; }
+  .weight-entry .wt { color: var(--text); font-weight: 600; }
+  .weight-entry .delta { font-size: 0.68rem; }
+  .weight-entry .delta.pos { color: var(--green); }
+  .weight-entry .delta.neg { color: var(--red); }
+
+  .tip-box {
+    background: rgba(232,255,71,0.06);
+    border: 1px solid rgba(232,255,71,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+  .tip-box strong { color: var(--accent); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-auto { grid-template-columns: 1fr; }
+    header, nav, main { padding-left: 20px; padding-right: 20px; }
+    .stats-row { flex-wrap: wrap; }
+    nav { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 0; }
+    nav button { flex-shrink: 0; }
+  }
+
+  .chevron { transition: transform 0.3s; display: inline-block; color: var(--muted); }
+  .chevron.open { transform: rotate(180deg); }
+
+  .add-task-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+
+  .log-note { font-size: 0.72rem; color: var(--muted); margin-top: 4px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">JAKE <span>DAILY OS</span></div>
+  </div>
+  <div class="date-display">
+    <div class="time" id="clock">--:--</div>
+    <div id="dateStr">--</div>
+    <div style="margin-top:4px; color: var(--accent2); font-size:0.7rem;" id="dayGreeting"></div>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('today')">Today</button>
+  <button onclick="switchTab('workout')">Workout</button>
+  <button onclick="switchTab('nutrition')">Nutrition</button>
+  <button onclick="switchTab('progress')">Progress</button>
+  <button onclick="switchTab('tasks')">Tasks</button>
+  <button onclick="switchTab('finance')">Finance</button>
+  <button onclick="switchTab('journal')">Journal</button>
+</nav>
+
+<main>
+
+<!-- ===== TODAY TAB ===== -->
+<div class="tab-panel active" id="tab-today">
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="val" id="today-cals-val">0</div>
+      <div class="lbl">Calories Today</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="today-protein-val">0g</div>
+      <div class="lbl">Protein</div>
+    </div>
+    <div class="stat-box">
+      <div class="val accent-line" id="today-day-val">—</div>
+      <div class="lbl">Workout Day</div>
+    </div>
+    <div class="stat-box">
+      <div class="val blue-line" id="creatine-day-today">D1</div>
+      <div class="lbl">Creatine Day</div>
+    </div>
+    <div class="stat-box">
+      <div class="val orange-line" id="today-weight-val">—</div>
+      <div class="lbl">Last Weight (lbs)</div>
+    </div>
+    <div class="stat-box" style="cursor:pointer;" onclick="switchTabDirect('today'); document.getElementById('water-section').scrollIntoView({behavior:'smooth'})">
+      <div class="val" style="color:var(--accent3);" id="today-water-val">0</div>
+      <div class="lbl">Water (cups)</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--green);" id="today-steps-val">—</div>
+      <div class="lbl">Steps</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--accent2);" id="today-sleep-val">—</div>
+      <div class="lbl">Sleep (hrs)</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--accent3);" id="today-hrv-val">—</div>
+      <div class="lbl">HRV</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--accent);" id="today-burned-val">—</div>
+      <div class="lbl">Cal Burned</div>
+    </div>
+  </div>
+
+  <!-- Scripture of the Day -->
+  <div class="card" style="margin-bottom:20px; background: rgba(232,255,71,0.04); border-color: rgba(232,255,71,0.2);">
+    <div class="card-label" style="color:var(--accent);">✝ Scripture / Word for Today</div>
+    <div id="scripture-display" style="font-size:0.92rem; color:var(--text); line-height:1.7; margin-bottom:12px; font-style:italic; min-height:24px;"></div>
+    <div class="input-row">
+      <input type="text" id="scripture-input" placeholder="Type a verse or note for today..." style="flex:1;">
+      <button class="btn" onclick="saveScripture()">Set</button>
+    </div>
+  </div>
+
+  <div class="grid-auto">
+    <div>
+      <div class="section-heading">Habits <span>Today</span></div>
+      <div class="card">
+        <div id="habit-list"></div>
+      </div>
+
+      <div class="section-heading" style="margin-top:24px;">Quick <span>Log</span></div>
+      <div class="card">
+        <div class="card-label">Log a meal / calories</div>
+        <div class="input-row">
+          <input type="text" id="quick-meal-name" placeholder="e.g. Breakfast, Shake..." style="flex:1">
+          <input type="number" id="quick-cals" placeholder="Cals" style="width:80px">
+          <input type="number" id="quick-protein" placeholder="Protein g" style="width:90px">
+          <button class="btn" onclick="logMeal()">Add</button>
+        </div>
+        <div id="today-log" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-heading">Daily <span>Reminders</span></div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-label">GCU Work</div>
+        <div id="gcu-reminders"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-label">Personal</div>
+        <div id="personal-reminders"></div>
+      </div>
+
+      <!-- WATER TRACKER -->
+      <div id="water-section">
+        <div class="section-heading">Water <span>Intake</span></div>
+        <div class="card">
+          <div class="card-label">Daily Goal: 16 cups (1 gallon)</div>
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:14px;">
+            <div style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent3); line-height:1;" id="water-big">0</div>
+            <div style="font-size:0.75rem; color:var(--muted);">cups<br>today</div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill fill-blue" id="water-bar" style="width:0%"></div></div>
+            <div style="font-size:0.7rem; color:var(--muted); margin-top:5px;" id="water-pct-label">0 of 16 cups</div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+            <button class="btn" onclick="addWater(1)">+ 1 Cup</button>
+            <button class="btn secondary" onclick="addWater(2)">+ 2 Cups</button>
+            <button class="btn secondary" onclick="addWater(-1)">− 1</button>
+            <button class="btn small secondary" onclick="resetWater()">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GARMIN LOG -->
+      <div style="margin-top:24px;">
+        <div class="section-heading">Garmin <span>Stats</span></div>
+        <div class="card">
+          <div class="card-label" style="margin-bottom:14px;">Log today's stats from Garmin Connect</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+            <div>
+              <div class="card-label" style="margin-bottom:4px;">Steps</div>
+              <div class="input-row" style="margin-bottom:0;">
+                <input type="number" id="garmin-steps" placeholder="e.g. 8500" style="width:100%;">
+              </div>
+            </div>
+            <div>
+              <div class="card-label" style="margin-bottom:4px;">Sleep (hrs)</div>
+              <div class="input-row" style="margin-bottom:0;">
+                <input type="number" id="garmin-sleep" placeholder="e.g. 7.5" step="0.1" style="width:100%;">
+              </div>
+            </div>
+            <div>
+              <div class="card-label" style="margin-bottom:4px;">HRV (ms)</div>
+              <div class="input-row" style="margin-bottom:0;">
+                <input type="number" id="garmin-hrv" placeholder="e.g. 52" style="width:100%;">
+              </div>
+            </div>
+            <div>
+              <div class="card-label" style="margin-bottom:4px;">Calories Burned</div>
+              <div class="input-row" style="margin-bottom:0;">
+                <input type="number" id="garmin-burned" placeholder="e.g. 2800" style="width:100%;">
+              </div>
+            </div>
+          </div>
+          <button class="btn" onclick="logGarmin()">Log Stats</button>
+
+          <!-- Steps progress -->
+          <div class="progress-wrap" style="margin-top:16px;">
+            <div class="progress-label"><span>Steps Goal</span><span id="steps-pct-lbl">0 / 10,000</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-green" id="steps-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <!-- Garmin history -->
+        <div class="section-heading" style="margin-top:20px;">Garmin <span>History</span></div>
+        <div class="card" style="max-height:280px; overflow-y:auto;">
+          <div id="garmin-history"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== WORKOUT TAB ===== -->
+<div class="tab-panel" id="tab-workout">
+  <div class="section-heading">Weekly <span>Split</span></div>
+  <div class="tip-box" style="margin-bottom:20px;">
+    <strong>Your split:</strong> Upper/Lower Power/Hypertrophy — 4 days minimum, 5 if you have it. Power days: 4–6 reps heavy, full reset between sets. Hypertrophy days: 8–12 reps, controlled tempo. Day 5 is a dedicated Push day. Window: <strong>7:00–8:10am</strong>
+  </div>
+  <div id="workout-days"></div>
+</div>
+
+<!-- ===== NUTRITION TAB ===== -->
+<div class="tab-panel" id="tab-nutrition">
+  <div class="section-heading">Calorie <span>Target: 3,800</span></div>
+
+  <div class="grid-3" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-label">Daily Calories</div>
+      <div class="card-value">3,800</div>
+      <div class="card-sub">Meals: ~2,025 · Snacks: ~1,775</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Protein Target</div>
+      <div class="card-value" style="color:var(--accent3);">190g</div>
+      <div class="card-sub">~1g per lb of target bodyweight</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Bulk Duration</div>
+      <div class="card-value" style="color:var(--accent2);">3mo</div>
+      <div class="card-sub">Then cut 6–8 weeks</div>
+    </div>
+  </div>
+
+  <div class="section-heading">Meal <span>Plan</span></div>
+  <div id="meal-plan"></div>
+
+  <hr class="divider">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+    <div class="section-heading" style="margin-bottom:0;">Grocery <span>List</span></div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:0.75rem; color:var(--muted);" id="grocery-summary">0 / 0 items</span>
+      <button class="btn small secondary" onclick="resetGrocery()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Budget bar -->
+  <div class="card" style="margin-bottom:20px; padding:16px 20px;">
+    <div style="display:flex; gap:0; flex-wrap:wrap;">
+      <div style="flex:1; min-width:100px; text-align:center; padding:8px;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--green);" id="grocery-spent">$0</div>
+        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--muted);">Est. Total</div>
+      </div>
+      <div style="flex:1; min-width:100px; text-align:center; padding:8px;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--accent);" id="grocery-remaining">$110</div>
+        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--muted);">Budget Left</div>
+      </div>
+      <div style="flex:1; min-width:100px; text-align:center; padding:8px;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--accent3);">$110</div>
+        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--muted);">Budget</div>
+      </div>
+    </div>
+    <div class="progress-bar" style="height:8px; margin-top:8px;">
+      <div class="progress-fill fill-yellow" id="grocery-budget-bar" style="width:0%;"></div>
+    </div>
+  </div>
+
+  <div id="grocery-list-container"></div>
+</div>
+
+<!-- ===== PROGRESS TAB ===== -->
+<div class="tab-panel" id="tab-progress">
+  <div class="section-heading">Weight <span>Log</span></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-label">Log Today's Weight</div>
+      <div class="input-row">
+        <input type="number" id="weight-input" placeholder="lbs" step="0.1" style="width:100px">
+        <button class="btn" onclick="logWeight()">Log</button>
+      </div>
+      <div class="log-note">Log first thing in the morning, before eating</div>
+      <hr class="divider" style="margin:16px 0;">
+      <div class="card-label">History</div>
+      <div class="weight-log" id="weight-history"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Bulk Progress</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Starting Weight</span><span id="prog-start">165 lbs</span></div>
+        <div class="progress-label"><span>Current</span><span id="prog-current">165 lbs</span></div>
+        <div class="progress-label"><span>Goal</span><span>185–190 lbs</span></div>
+        <div class="progress-bar" style="height:10px; margin-top:10px;">
+          <div class="progress-fill fill-yellow" id="bulk-progress-bar" style="width:0%"></div>
+        </div>
+        <div style="font-size:0.7rem; color:var(--muted); margin-top:6px;" id="bulk-progress-label">0 lbs gained of ~22 lbs goal</div>
+      </div>
+      <hr class="divider">
+      <div class="card-label">Creatine Saturation</div>
+      <div class="creatine-status">
+        <div class="creatine-day" id="creatine-day-num">1</div>
+        <div class="creatine-label">Day of Protocol</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Saturation Level</span><span id="sat-pct">4%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-blue" id="sat-bar" style="width:4%"></div></div>
+        <div style="font-size:0.7rem; color:var(--muted); margin-top:6px;">Full saturation at ~day 28 (5g/day protocol)</div>
+      </div>
+      <div class="tip-box">
+        <strong>Protocol:</strong> 5g daily with your biggest meal. No loading phase — cleaner on your stomach. Full saturation in 3–4 weeks. Expect 3–5 lbs water weight early on — that's normal.
+      </div>
+      <div style="margin-top:16px; display:flex; gap:8px;">
+        <button class="btn small" onclick="advCreatine()">+ Advance Day</button>
+        <button class="btn small secondary" onclick="resetCreatine()">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TASKS TAB ===== -->
+<div class="tab-panel" id="tab-tasks">
+  <div class="grid-2">
+    <div>
+      <div class="section-heading">GCU <span>Work</span></div>
+      <div class="card">
+        <div id="gcu-tasks"></div>
+        <div class="add-task-form">
+          <div class="form-row">
+            <input type="text" id="gcu-task-input" placeholder="Add GCU task..." style="flex:1">
+            <select id="gcu-pri" style="width:90px;">
+              <option value="high">High</option>
+              <option value="med" selected>Med</option>
+              <option value="low">Low</option>
+            </select>
+            <button class="btn small" onclick="addTask('gcu')">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-heading">Personal <span>Tasks</span></div>
+      <div class="card">
+        <div id="personal-tasks"></div>
+        <div class="add-task-form">
+          <div class="form-row">
+            <input type="text" id="personal-task-input" placeholder="Add personal task..." style="flex:1">
+            <select id="personal-pri" style="width:90px;">
+              <option value="high">High</option>
+              <option value="med" selected>Med</option>
+              <option value="low">Low</option>
+            </select>
+            <button class="btn small" onclick="addTask('personal')">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FINANCE TAB ===== -->
+<div class="tab-panel" id="tab-finance">
+  <div class="section-heading">Monthly <span>Budget</span></div>
+  <div class="tip-box" style="margin-bottom:20px;">
+    <strong>Your numbers:</strong> $15/hr × 40hrs = $600/week · ~$2,400/month take-home · Savings goal: <strong>$800/month</strong>
+  </div>
+
+  <div class="stats-row" style="margin-bottom:24px;">
+    <div class="stat-box">
+      <div class="val" style="color:var(--green);" id="finance-income-display">$0</div>
+      <div class="lbl">Income</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--red);" id="finance-expenses-display">$0</div>
+      <div class="lbl">Expenses</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="finance-leftover-display">$0</div>
+      <div class="lbl">Left Over</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--accent2);" id="finance-savings-display">$0</div>
+      <div class="lbl">Saved This Month</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-heading">Log <span>Expense</span></div>
+      <div class="card">
+        <div class="input-row" style="flex-wrap:wrap; gap:8px;">
+          <input type="text" id="exp-name" placeholder="Description (e.g. Groceries)" style="flex:2; min-width:140px;">
+          <input type="number" id="exp-amount" placeholder="Amount $" style="width:110px;">
+          <select id="exp-category" style="width:120px;">
+            <option value="food">Food</option>
+            <option value="transport">Transport</option>
+            <option value="gym">Gym</option>
+            <option value="subscriptions">Subscriptions</option>
+            <option value="savings">Savings</option>
+            <option value="other">Other</option>
+          </select>
+          <button class="btn" onclick="addExpense()">Add</button>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="card-label">Set Monthly Income</div>
+          <div class="input-row">
+            <input type="number" id="income-input" placeholder="Monthly take-home $" style="flex:1;">
+            <button class="btn secondary" onclick="setIncome()">Set</button>
+          </div>
+          <div class="card-label" style="margin-top:14px;">Savings Goal</div>
+          <div class="input-row">
+            <input type="number" id="savings-goal-input" placeholder="Goal $" style="flex:1;">
+            <button class="btn secondary" onclick="setSavingsGoal()">Set</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-heading" style="margin-top:24px;">Savings <span>Goal</span></div>
+      <div class="card">
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Saved</span><span id="savings-saved-lbl">$0</span></div>
+          <div class="progress-label"><span>Goal</span><span id="savings-goal-lbl">$0</span></div>
+          <div class="progress-bar" style="height:10px; margin-top:8px;">
+            <div class="progress-fill fill-orange" id="savings-bar" style="width:0%"></div>
+          </div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:6px;" id="savings-pct-lbl">0% of goal</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-heading">Expense <span>Log</span></div>
+      <div class="card" style="max-height:520px; overflow-y:auto;">
+        <div id="expense-list"></div>
+        <div style="margin-top:12px;">
+          <button class="btn small secondary" onclick="clearExpenses()">Clear All Expenses</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== JOURNAL TAB ===== -->
+<div class="tab-panel" id="tab-journal">
+  <div class="section-heading">Daily <span>Journal</span></div>
+
+  <div class="grid-auto">
+    <div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-label">Today's Entry — <span id="journal-today-date" style="color:var(--text);"></span></div>
+        <div style="margin-bottom:10px;">
+          <div class="card-label" style="margin-bottom:6px;">Weekly Win</div>
+          <input type="text" id="journal-win" placeholder="What's one thing going well this week?" style="width:100%;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="card-label" style="margin-bottom:6px;">What I'm Grateful For</div>
+          <input type="text" id="journal-grateful" placeholder="Keep it simple..." style="width:100%;">
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="card-label" style="margin-bottom:6px;">Notes / Reflection</div>
+          <textarea id="journal-notes" placeholder="What happened today? Anything on your mind..." style="width:100%; height:100px; resize:vertical;"></textarea>
+        </div>
+        <button class="btn" onclick="saveJournalEntry()">Save Entry</button>
+        <span id="journal-saved-msg" style="font-size:0.75rem; color:var(--green); margin-left:12px; display:none;">Saved ✓</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-heading">Past <span>Entries</span></div>
+      <div class="card" style="max-height:600px; overflow-y:auto;">
+        <div id="journal-history"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ===== STATE =====
+let state = JSON.parse(localStorage.getItem('jake_dashboard') || 'null') || {
+  habits: [
+    { id: 1, label: 'Hit 3,800+ calories', done: false },
+    { id: 2, label: 'Hit 190g protein', done: false },
+    { id: 3, label: 'Lifted today', done: false },
+    { id: 4, label: 'Took creatine (5g)', done: false },
+    { id: 5, label: 'Drank 1 gallon water', done: false },
+    { id: 6, label: 'Donor outreach done', done: false },
+    { id: 7, label: 'Class work done', done: false },
+  ],
+  todayLog: [],
+  weightLog: [],
+  creatineDay: 1,
+  setChecks: {},
+  liftLog: {},
+  gcuTasks: [
+    { id: 1, text: 'Follow up with Structures (Kelli/Melissa)', priority: 'high', done: false },
+    { id: 2, text: 'Send donor stewardship email', priority: 'high', done: false },
+    { id: 3, text: 'Prep for next prospect meeting', priority: 'med', done: false },
+    { id: 4, text: 'Review OSHA training program pitch deck', priority: 'med', done: false },
+    { id: 5, text: 'Campus tour prep', priority: 'low', done: false },
+  ],
+  personalTasks: [
+    { id: 1, text: 'Meal prep for the week (Sunday)', priority: 'high', done: false },
+    { id: 2, text: 'Log weight first thing AM', priority: 'med', done: false },
+    { id: 3, text: 'Research Trust Funder next step', priority: 'low', done: false },
+  ],
+  taskIdCounter: 10,
+  lastResetDate: new Date().toDateString(),
+  waterCups: 0,
+  waterGoal: 16,
+  scripture: '',
+  monthlyIncome: 2400,
+  savingsGoal: 800,
+  expenses: [],
+  journalEntries: [],
+  garminLog: [],
+  groceryChecked: {},
+};
+
+function save() {
+  localStorage.setItem('jake_dashboard', JSON.stringify(state));
+}
+
+// Migrate old saves that don't have new fields
+if (state.waterCups === undefined) state.waterCups = 0;
+if (state.waterGoal === undefined) state.waterGoal = 16;
+if (state.scripture === undefined) state.scripture = '';
+if (state.monthlyIncome === undefined) state.monthlyIncome = 0;
+if (state.savingsGoal === undefined) state.savingsGoal = 0;
+if (state.expenses === undefined) state.expenses = [];
+if (state.journalEntries === undefined) state.journalEntries = [];
+if (state.garminLog === undefined) state.garminLog = [];
+if (state.groceryChecked === undefined) state.groceryChecked = {};
+
+// ===== CLOCK =====
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('dateStr').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const h = now.getHours();
+  const greetings = h < 12 ? 'Morning session 💪' : h < 17 ? 'Afternoon grind' : 'Evening mode';
+  document.getElementById('dayGreeting').textContent = greetings;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ===== TABS =====
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+  render();
+}
+
+// ===== WORKOUT DATA =====
+const workoutDays = [
+  {
+    name: 'Day 1 — Lower Power', tag: 'Power', tagClass: 'tag-power',
+    exercises: [
+      { name: 'Back Squat', sets: '4', reps: '4–6', note: 'Heavy — full reset each set' },
+      { name: 'Romanian Deadlift', sets: '3', reps: '8', note: 'Control the eccentric' },
+      { name: 'Leg Press', sets: '3', reps: '10', note: 'Full range of motion' },
+      { name: 'Leg Curl', sets: '3', reps: '8', note: 'Targets hamstrings RDL misses' },
+      { name: 'Tibialis Raise', sets: '3', reps: '15', note: '' },
+      { name: 'Calf Raise', sets: '4', reps: '15', note: 'Slow tempo — 2 sec up, 2 sec down' },
+    ]
+  },
+  {
+    name: 'Day 2 — Upper Power', tag: 'Power', tagClass: 'tag-power',
+    exercises: [
+      { name: 'Bench Press', sets: '4', reps: '4–6', note: 'Heavy — full reset each set' },
+      { name: 'Weighted Pull-ups', sets: '4', reps: '4–6', note: 'Add weight if bodyweight is easy' },
+      { name: 'Overhead Press', sets: '3', reps: '8', note: 'Strict form — no leg drive' },
+      { name: 'Barbell Row', sets: '3', reps: '8', note: 'Chest to bench for strict form' },
+      { name: 'Barbell Curl', sets: '3', reps: '8', note: 'Heavy — full ROM' },
+      { name: 'Face Pulls', sets: '3', reps: '15', note: 'Shoulder health — don\'t skip' },
+    ]
+  },
+  {
+    name: 'Day 3 — Lower Hypertrophy', tag: 'Hypertrophy', tagClass: 'tag-hypertrophy',
+    exercises: [
+      { name: 'Hack Squat / Bulgarian Split Squat', sets: '4', reps: '10', note: 'Pick one and stick with it each week' },
+      { name: 'Nordic Curls', sets: '3', reps: '8', note: 'Best hamstring builder in existence' },
+      { name: 'Walking Lunges', sets: '3', reps: '12', note: 'Each leg' },
+      { name: 'Leg Extension', sets: '3', reps: '12', note: 'Direct quad stimulus — full extension at top' },
+      { name: 'Single Leg RDL', sets: '3', reps: '10', note: 'Balance + unilateral hamstring' },
+      { name: 'Seated Calf Raise', sets: '4', reps: '15', note: 'Targets soleus — different from standing' },
+    ]
+  },
+  {
+    name: 'Day 4 — Upper Hypertrophy', tag: 'Hypertrophy', tagClass: 'tag-hypertrophy',
+    exercises: [
+      { name: 'Incline DB Press', sets: '4', reps: '10', note: 'Upper chest emphasis' },
+      { name: 'Cable Rows', sets: '4', reps: '10', note: 'Squeeze at the end of each rep' },
+      { name: 'Lateral Raises', sets: '4', reps: '15', note: 'Light weight, strict form, no swinging' },
+      { name: 'Incline DB Curl', sets: '3', reps: '12', note: 'Hits long head of bicep — best curl variation' },
+      { name: 'Overhead Tricep Extension', sets: '3', reps: '12', note: 'Hits long head of tricep — most growth potential' },
+      { name: 'Hammer Curls', sets: '3', reps: '12', note: 'Brachialis + forearm thickness' },
+    ]
+  },
+  {
+    name: 'Day 5 — Push Focus (5-day week)', tag: 'Bonus', tagClass: 'tag-bonus',
+    exercises: [
+      { name: 'Dips (weighted if possible)', sets: '4', reps: '8–10', note: 'Chest + tricep compound' },
+      { name: 'DB Shoulder Press', sets: '3', reps: '10', note: 'Seated — strict overhead' },
+      { name: 'Cable Fly', sets: '3', reps: '12', note: 'Chest stretch at bottom — slow eccentric' },
+      { name: 'Tricep Pushdowns', sets: '3', reps: '12', note: 'Rope attachment' },
+      { name: 'Lateral Raises', sets: '3', reps: '15', note: 'Finisher — go to failure last set' },
+    ]
+  },
+  {
+    name: 'Rest Days', tag: 'Rest', tagClass: 'tag-rest',
+    exercises: [
+      { name: 'Light walk or mobility work', sets: '—', reps: '—', note: 'Keep moving, don\'t sit all day' },
+      { name: 'Foam rolling', sets: '—', reps: '10 min', note: 'Focus on quads, hamstrings, lats' },
+      { name: '1x weekly conditioning', sets: '—', reps: '20–30 min', note: 'Bike sprints, sled, or tempo run' },
+    ]
+  },
+];
+
+// ===== MEAL DATA =====
+const meals = [
+  {
+    name: 'Breakfast', cals: 745,
+    items: '5 eggs\n4 sausage links\n1 cup whole milk (8 fl oz)\n¼ cup cottage cheese (60g)'
+  },
+  {
+    name: 'Lunch', cals: 705,
+    items: '8oz meat raw weight (225g)\n8oz cooked rice — ~1 cup dry cooked down\n1 medium sweet potato (150g)'
+  },
+  {
+    name: 'Dinner', cals: 575,
+    items: '8oz meat raw weight (225g)\n8oz cooked rice — ~1 cup dry cooked down'
+  },
+  {
+    name: 'Snack 1 — Morning', cals: 350,
+    items: '1 cup greek yogurt (227g)\n¼ cup granola (30g)\n1 tbsp honey (21g)'
+  },
+  {
+    name: 'Snack 2 — Afternoon', cals: 400,
+    items: '2 scoops protein powder (60g)\n1 cup whole milk (8 fl oz)\n~50g protein, ~400 cal'
+  },
+  {
+    name: 'Snack 3 — Evening', cals: 500,
+    items: '1 cup dry oats (90g) cooked with milk\n2 tbsp peanut butter (32g)\n1 banana (120g)'
+  },
+  {
+    name: 'Snack 4 — Grab & Go (optional)', cals: 350,
+    items: '2oz mixed nuts (56g)\n2 string cheese sticks\nOR: 4 tbsp peanut butter (64g) + 1 banana (120g)'
+  },
+];
+
+// ===== REMINDERS DATA =====
+const gcuReminders = [
+  'Follow up on any open donor emails from yesterday',
+  'Check in with Tyler on prospect pipeline',
+  'Log any new contacts from campus tours',
+  'Review Structures partnership — any updates from Kelli/Melissa?',
+];
+const personalReminders = [
+  'Log weight before eating (morning)',
+  'Take creatine with biggest meal',
+  'Track calories — don\'t guess, log it',
+  'Prep tomorrow\'s meals tonight if possible',
+];
+
+// ===== RENDER FUNCTIONS =====
+function render() {
+  renderHabits();
+  renderTodayLog();
+  renderReminders();
+  renderWorkout();
+  renderMeals();
+  renderTasks('gcu');
+  renderTasks('personal');
+  renderWeightLog();
+  renderCreatine();
+  renderWater();
+  renderScripture();
+  renderFinance();
+  renderJournal();
+  renderGarmin();
+  renderGrocery();
+  updateTodayStats();
+}
+
+function renderHabits() {
+  const el = document.getElementById('habit-list');
+  el.innerHTML = state.habits.map(h => `
+    <div class="habit-row">
+      <div class="habit-label">${h.label}</div>
+      <div class="habit-toggle ${h.done ? 'on' : ''}" onclick="toggleHabit(${h.id})"></div>
+    </div>
+  `).join('');
+}
+
+function toggleHabit(id) {
+  const h = state.habits.find(x => x.id === id);
+  if (h) { h.done = !h.done; save(); render(); }
+}
+
+function renderTodayLog() {
+  const el = document.getElementById('today-log');
+  if (!state.todayLog.length) { el.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);">No meals logged yet today.</div>'; return; }
+  el.innerHTML = state.todayLog.map((m, i) => `
+    <div class="task-item">
+      <div class="task-text" style="flex:1">
+        <strong>${m.name}</strong><br>
+        <span style="font-size:0.72rem;color:var(--muted);">${m.cals} cal${m.protein ? ' · ' + m.protein + 'g protein' : ''}</span>
+      </div>
+      <button class="btn small danger" onclick="removeLog(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function logMeal() {
+  const name = document.getElementById('quick-meal-name').value.trim();
+  const cals = parseInt(document.getElementById('quick-cals').value) || 0;
+  const protein = parseInt(document.getElementById('quick-protein').value) || 0;
+  if (!name || !cals) return;
+  state.todayLog.push({ name, cals, protein });
+  document.getElementById('quick-meal-name').value = '';
+  document.getElementById('quick-cals').value = '';
+  document.getElementById('quick-protein').value = '';
+  save(); render();
+}
+
+function removeLog(i) {
+  state.todayLog.splice(i, 1);
+  save(); render();
+}
+
+function updateTodayStats() {
+  const totalCals = state.todayLog.reduce((a, m) => a + m.cals, 0);
+  const totalProtein = state.todayLog.reduce((a, m) => a + m.protein, 0);
+  document.getElementById('today-cals-val').textContent = totalCals.toLocaleString();
+  document.getElementById('today-protein-val').textContent = totalProtein + 'g';
+  const dayLabels = ['Rest', 'Lower Power', 'Upper Power', 'Lower Hyp.', 'Upper Hyp.', 'Bonus', 'Rest'];
+  const d = new Date().getDay();
+  document.getElementById('today-day-val').textContent = dayLabels[d] || '—';
+  const lastW = state.weightLog.length ? state.weightLog[state.weightLog.length - 1].weight : '—';
+  document.getElementById('today-weight-val').textContent = lastW;
+  document.getElementById('creatine-day-today').textContent = 'D' + state.creatineDay;
+  document.getElementById('today-water-val').textContent = state.waterCups || 0;
+  const lastG = state.garminLog && state.garminLog.length ? state.garminLog[state.garminLog.length - 1] : null;
+  document.getElementById('today-steps-val').textContent = lastG && lastG.steps ? lastG.steps.toLocaleString() : '—';
+  document.getElementById('today-sleep-val').textContent = lastG && lastG.sleep ? lastG.sleep + 'h' : '—';
+  document.getElementById('today-hrv-val').textContent = lastG && lastG.hrv ? lastG.hrv : '—';
+  document.getElementById('today-burned-val').textContent = lastG && lastG.burned ? lastG.burned.toLocaleString() : '—';
+}
+
+function renderReminders() {
+  document.getElementById('gcu-reminders').innerHTML = gcuReminders.map(r => `
+    <div style="font-size:0.78rem;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);">→ ${r}</div>
+  `).join('');
+  document.getElementById('personal-reminders').innerHTML = personalReminders.map(r => `
+    <div style="font-size:0.78rem;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);">→ ${r}</div>
+  `).join('');
+}
+
+function renderWorkout() {
+  if (!state.setChecks) state.setChecks = {};
+  if (!state.liftLog) state.liftLog = {};
+
+  document.getElementById('workout-days').innerHTML = workoutDays.map((day, dayIdx) => {
+    const numSets = (s) => parseInt(s) || 0;
+
+    // check if entire day is done
+    const allSets = day.exercises.filter(e => numSets(e.sets) > 0);
+    const totalSetCount = allSets.reduce((a, e) => a + numSets(e.sets), 0);
+    const checkedCount = allSets.reduce((a, e, exIdx) => {
+      for (let s = 0; s < numSets(e.sets); s++) {
+        if (state.setChecks[`${dayIdx}-${exIdx}-${s}`]) a++;
+      }
+      return a;
+    }, 0);
+    const dayDone = totalSetCount > 0 && checkedCount === totalSetCount;
+
+    const exercisesHTML = day.exercises.map((e, exIdx) => {
+      const key = `${dayIdx}-${exIdx}`;
+      const sets = numSets(e.sets);
+      const history = (state.liftLog[key] || []).slice(-5);
+
+      // set checkboxes
+      let setsHTML = '';
+      if (sets > 0) {
+        setsHTML = `<div class="set-checklist">`;
+        for (let s = 0; s < sets; s++) {
+          const checked = !!state.setChecks[`${key}-${s}`];
+          setsHTML += `<div class="set-box ${checked ? 'done' : ''}" onclick="toggleSet(${dayIdx},${exIdx},${s})">
+            <span class="set-num">S${s+1}</span>
+          </div>`;
+        }
+        setsHTML += `</div>`;
+      }
+
+      // weight history chips
+      let chipsHTML = '';
+      if (history.length) {
+        chipsHTML = `<div class="weight-history-mini">`;
+        history.forEach((entry, i) => {
+          const prev = history[i - 1];
+          let deltaHTML = '';
+          if (prev) {
+            const diff = entry.weight - prev.weight;
+            const cls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'same';
+            const sign = diff > 0 ? '+' : '';
+            deltaHTML = `<span class="chip-delta ${cls}">${sign}${diff}lbs</span>`;
+          }
+          chipsHTML += `<div class="weight-chip">
+            <span class="chip-date">${entry.date}</span>
+            <span class="chip-val">${entry.weight}lbs</span>
+            ${deltaHTML}
+            <span style="cursor:pointer;color:var(--red);font-size:0.6rem;" onclick="deleteLiftEntry('${key}',${i})">✕</span>
+          </div>`;
+        });
+        chipsHTML += `</div>`;
+      }
+
+      // weight input
+      const weightInputHTML = e.sets !== '—' ? `
+        <div class="weight-log-row">
+          <label>Weight used:</label>
+          <input type="number" id="lift-weight-${key}" placeholder="lbs" step="2.5" min="0">
+          <button class="btn small" onclick="logLiftWeight('${key}')">Log</button>
+        </div>
+        ${chipsHTML}
+      ` : '';
+
+      return `
+        <div class="exercise-block">
+          <div class="exercise-top">
+            <div>
+              <div class="exercise-name">${e.name}</div>
+              <div class="exercise-meta">${e.sets !== '—' ? e.sets + ' sets' : ''} ${e.reps !== '—' ? '· ' + e.reps + ' reps' : ''}</div>
+              ${e.note ? `<div class="exercise-note">${e.note}</div>` : ''}
+            </div>
+          </div>
+          ${setsHTML}
+          ${weightInputHTML}
+        </div>
+      `;
+    }).join('');
+
+    const progressText = totalSetCount > 0 ? `${checkedCount}/${totalSetCount} sets` : '';
+
+    return `
+      <div class="day-card">
+        <div class="day-header" onclick="toggleDay(${dayIdx})">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div class="day-name">${day.name}</div>
+            <span class="day-tag ${day.tagClass}">${day.tag}</span>
+            ${dayDone ? `<span class="day-complete-badge">✓ Done</span>` : progressText ? `<span style="font-size:0.65rem;color:var(--muted);font-family:'JetBrains Mono',monospace;">${progressText}</span>` : ''}
+          </div>
+          <span class="chevron" id="chev-${dayIdx}">▾</span>
+        </div>
+        <div class="day-body" id="day-body-${dayIdx}">
+          ${exercisesHTML}
+          ${totalSetCount > 0 ? `<div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn small secondary" onclick="clearDaySets(${dayIdx})">Clear all sets</button>
+          </div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleDay(idx) {
+  const body = document.getElementById('day-body-' + idx);
+  const chev = document.getElementById('chev-' + idx);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toggleSet(dayIdx, exIdx, setIdx) {
+  if (!state.setChecks) state.setChecks = {};
+  const key = `${dayIdx}-${exIdx}-${setIdx}`;
+  state.setChecks[key] = !state.setChecks[key];
+  save(); renderWorkout();
+  // re-open the day that was open
+  const body = document.getElementById('day-body-' + dayIdx);
+  const chev = document.getElementById('chev-' + dayIdx);
+  if (body) { body.classList.add('open'); }
+  if (chev) { chev.classList.add('open'); }
+}
+
+function logLiftWeight(key) {
+  if (!state.liftLog) state.liftLog = {};
+  const input = document.getElementById('lift-weight-' + key);
+  if (!input) return;
+  const val = parseFloat(input.value);
+  if (!val || val <= 0) return;
+  if (!state.liftLog[key]) state.liftLog[key] = [];
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  state.liftLog[key].push({ date, weight: val });
+  input.value = '';
+  save();
+  // re-render workout and re-open day
+  const parts = key.split('-');
+  const dayIdx = parseInt(parts[0]);
+  renderWorkout();
+  const body = document.getElementById('day-body-' + dayIdx);
+  const chev = document.getElementById('chev-' + dayIdx);
+  if (body) body.classList.add('open');
+  if (chev) chev.classList.add('open');
+}
+
+function deleteLiftEntry(key, idx) {
+  if (!state.liftLog || !state.liftLog[key]) return;
+  state.liftLog[key].splice(idx, 1);
+  save();
+  const parts = key.split('-');
+  const dayIdx = parseInt(parts[0]);
+  renderWorkout();
+  const body = document.getElementById('day-body-' + dayIdx);
+  const chev = document.getElementById('chev-' + dayIdx);
+  if (body) body.classList.add('open');
+  if (chev) chev.classList.add('open');
+}
+
+function clearDaySets(dayIdx) {
+  if (!state.setChecks) return;
+  Object.keys(state.setChecks).forEach(k => {
+    if (k.startsWith(dayIdx + '-')) delete state.setChecks[k];
+  });
+  save();
+  renderWorkout();
+  const body = document.getElementById('day-body-' + dayIdx);
+  const chev = document.getElementById('chev-' + dayIdx);
+  if (body) body.classList.add('open');
+  if (chev) chev.classList.add('open');
+}
+
+function renderMeals() {
+  const el = document.getElementById('meal-plan');
+  if (!el) return;
+  el.innerHTML = meals.map(m => `
+    <div class="meal-card">
+      <div class="meal-header">
+        <div class="meal-name">${m.name}</div>
+        <div class="meal-cals">${m.cals} cal</div>
+      </div>
+      <div class="meal-items">${m.items.split('\n').join('<br>')}</div>
+    </div>
+  `).join('');
+}
+
+function renderTasks(group) {
+  const tasks = group === 'gcu' ? state.gcuTasks : state.personalTasks;
+  const el = document.getElementById(group + '-tasks');
+  el.innerHTML = tasks.map(t => `
+    <div class="task-item">
+      <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask('${group}', ${t.id})"></div>
+      <div class="task-text ${t.done ? 'done' : ''}">${t.text}</div>
+      <span class="task-priority pri-${t.priority}">${t.priority}</span>
+      <button class="btn small danger" onclick="removeTask('${group}', ${t.id})">✕</button>
+    </div>
+  `).join('');
+
+  // Also render in today tab reminders area
+  if (group === 'gcu') {
+    const rem = document.getElementById('gcu-reminders');
+    if (rem) {
+      const open = tasks.filter(t => !t.done);
+      rem.innerHTML = open.length
+        ? open.map(t => `<div style="font-size:0.78rem;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">→ ${t.text} <span class="task-priority pri-${t.priority}" style="font-size:0.6rem;">${t.priority}</span></div>`).join('')
+        : '<div style="font-size:0.75rem;color:var(--green);padding:6px 0;">✓ All clear!</div>';
+    }
+  }
+}
+
+function toggleTask(group, id) {
+  const tasks = group === 'gcu' ? state.gcuTasks : state.personalTasks;
+  const t = tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; save(); render(); }
+}
+
+function removeTask(group, id) {
+  if (group === 'gcu') state.gcuTasks = state.gcuTasks.filter(t => t.id !== id);
+  else state.personalTasks = state.personalTasks.filter(t => t.id !== id);
+  save(); render();
+}
+
+function addTask(group) {
+  const input = document.getElementById(group + '-task-input');
+  const pri = document.getElementById(group + '-pri').value;
+  const text = input.value.trim();
+  if (!text) return;
+  const task = { id: ++state.taskIdCounter, text, priority: pri, done: false };
+  if (group === 'gcu') state.gcuTasks.push(task);
+  else state.personalTasks.push(task);
+  input.value = '';
+  save(); render();
+}
+
+function renderWeightLog() {
+  const el = document.getElementById('weight-history');
+  if (!el) return;
+  if (!state.weightLog.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;">No entries yet. Log your morning weight.</div>';
+    return;
+  }
+  const sorted = [...state.weightLog].reverse().slice(0, 10);
+  el.innerHTML = sorted.map((entry, i) => {
+    const prev = sorted[i + 1];
+    let delta = '';
+    if (prev) {
+      const diff = (entry.weight - prev.weight).toFixed(1);
+      const cls = diff > 0 ? 'pos' : 'neg';
+      delta = `<span class="delta ${cls}">${diff > 0 ? '+' : ''}${diff}</span>`;
+    }
+    return `<div class="weight-entry"><span>${entry.date}</span><span class="wt">${entry.weight} lbs ${delta}</span></div>`;
+  }).join('');
+
+  // Update bulk progress
+  const current = state.weightLog[state.weightLog.length - 1].weight;
+  const gained = current - 165;
+  const pct = Math.min(100, Math.max(0, (gained / 22) * 100));
+  document.getElementById('prog-current').textContent = current + ' lbs';
+  const bar = document.getElementById('bulk-progress-bar');
+  if (bar) bar.style.width = pct + '%';
+  const lbl = document.getElementById('bulk-progress-label');
+  if (lbl) lbl.textContent = gained.toFixed(1) + ' lbs gained of ~22 lbs goal';
+}
+
+function logWeight() {
+  const val = parseFloat(document.getElementById('weight-input').value);
+  if (!val || val < 100 || val > 350) return;
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  state.weightLog.push({ date, weight: val });
+  document.getElementById('weight-input').value = '';
+  save(); render();
+}
+
+function renderCreatine() {
+  const day = state.creatineDay;
+  document.getElementById('creatine-day-num').textContent = day;
+  const satPct = Math.min(100, Math.round((day / 28) * 100));
+  document.getElementById('sat-pct').textContent = satPct + '%';
+  const bar = document.getElementById('sat-bar');
+  if (bar) bar.style.width = satPct + '%';
+}
+
+function advCreatine() {
+  state.creatineDay++;
+  save(); render();
+}
+
+function resetCreatine() {
+  if (confirm('Reset creatine counter to Day 1?')) {
+    state.creatineDay = 1;
+    save(); render();
+  }
+}
+
+// ===== WATER =====
+function renderWater() {
+  const cups = state.waterCups || 0;
+  const goal = state.waterGoal || 16;
+  const pct = Math.min(100, Math.round((cups / goal) * 100));
+  const bigEl = document.getElementById('water-big');
+  const barEl = document.getElementById('water-bar');
+  const lblEl = document.getElementById('water-pct-label');
+  if (bigEl) bigEl.textContent = cups;
+  if (barEl) barEl.style.width = pct + '%';
+  if (lblEl) lblEl.textContent = `${cups} of ${goal} cups`;
+}
+
+function addWater(n) {
+  state.waterCups = Math.max(0, (state.waterCups || 0) + n);
+  save(); render();
+}
+
+function resetWater() {
+  state.waterCups = 0;
+  save(); render();
+}
+
+// ===== SCRIPTURE =====
+function renderScripture() {
+  const el = document.getElementById('scripture-display');
+  if (!el) return;
+  el.textContent = state.scripture || 'No verse set for today. Add one above ↑';
+  el.style.color = state.scripture ? 'var(--text)' : 'var(--muted)';
+}
+
+function saveScripture() {
+  const val = document.getElementById('scripture-input').value.trim();
+  if (!val) return;
+  state.scripture = val;
+  document.getElementById('scripture-input').value = '';
+  save(); render();
+}
+
+// ===== FINANCE =====
+function renderFinance() {
+  const income = state.monthlyIncome || 0;
+  const totalExp = (state.expenses || []).reduce((a, e) => a + e.amount, 0);
+  const totalSaved = (state.expenses || []).filter(e => e.category === 'savings').reduce((a, e) => a + e.amount, 0);
+  const leftover = income - totalExp;
+  const goal = state.savingsGoal || 0;
+  const savingsPct = goal > 0 ? Math.min(100, Math.round((totalSaved / goal) * 100)) : 0;
+
+  const fmt = (n) => '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
+
+  const incEl = document.getElementById('finance-income-display');
+  const expEl = document.getElementById('finance-expenses-display');
+  const leftEl = document.getElementById('finance-leftover-display');
+  const savEl = document.getElementById('finance-savings-display');
+  if (incEl) incEl.textContent = fmt(income);
+  if (expEl) expEl.textContent = fmt(totalExp);
+  if (leftEl) {
+    leftEl.textContent = (leftover < 0 ? '-' : '') + fmt(leftover);
+    leftEl.style.color = leftover >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+  if (savEl) savEl.textContent = fmt(totalSaved);
+
+  const savBar = document.getElementById('savings-bar');
+  const savSavedLbl = document.getElementById('savings-saved-lbl');
+  const savGoalLbl = document.getElementById('savings-goal-lbl');
+  const savPctLbl = document.getElementById('savings-pct-lbl');
+  if (savBar) savBar.style.width = savingsPct + '%';
+  if (savSavedLbl) savSavedLbl.textContent = fmt(totalSaved);
+  if (savGoalLbl) savGoalLbl.textContent = fmt(goal);
+  if (savPctLbl) savPctLbl.textContent = savingsPct + '% of goal';
+
+  const listEl = document.getElementById('expense-list');
+  if (!listEl) return;
+  if (!state.expenses || !state.expenses.length) {
+    listEl.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);">No expenses logged yet.</div>';
+    return;
+  }
+  const catColors = { food: 'var(--accent)', transport: 'var(--accent2)', gym: 'var(--accent3)', subscriptions: 'var(--muted)', savings: 'var(--green)', other: 'var(--muted)' };
+  listEl.innerHTML = [...state.expenses].reverse().map((e, ri) => {
+    const i = state.expenses.length - 1 - ri;
+    return `<div class="task-item">
+      <div class="task-text" style="flex:1;">
+        <strong>${e.name}</strong><br>
+        <span style="font-size:0.7rem; color:${catColors[e.category] || 'var(--muted)'}; text-transform:uppercase; letter-spacing:1px;">${e.category}</span>
+        <span style="font-size:0.7rem; color:var(--muted);"> · ${e.date}</span>
+      </div>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--red); white-space:nowrap;">-$${e.amount.toLocaleString()}</span>
+      <button class="btn small danger" onclick="removeExpense(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function addExpense() {
+  const name = document.getElementById('exp-name').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const category = document.getElementById('exp-category').value;
+  if (!name || !amount || amount <= 0) return;
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (!state.expenses) state.expenses = [];
+  state.expenses.push({ name, amount, category, date });
+  document.getElementById('exp-name').value = '';
+  document.getElementById('exp-amount').value = '';
+  save(); renderFinance();
+}
+
+function removeExpense(i) {
+  state.expenses.splice(i, 1);
+  save(); renderFinance();
+}
+
+function clearExpenses() {
+  if (confirm('Clear all expenses for this month?')) {
+    state.expenses = [];
+    save(); renderFinance();
+  }
+}
+
+function setIncome() {
+  const val = parseFloat(document.getElementById('income-input').value);
+  if (!val || val <= 0) return;
+  state.monthlyIncome = val;
+  document.getElementById('income-input').value = '';
+  save(); renderFinance();
+}
+
+function setSavingsGoal() {
+  const val = parseFloat(document.getElementById('savings-goal-input').value);
+  if (!val || val <= 0) return;
+  state.savingsGoal = val;
+  document.getElementById('savings-goal-input').value = '';
+  save(); renderFinance();
+}
+
+// ===== JOURNAL =====
+function renderJournal() {
+  const dateEl = document.getElementById('journal-today-date');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const histEl = document.getElementById('journal-history');
+  if (!histEl) return;
+  if (!state.journalEntries || !state.journalEntries.length) {
+    histEl.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);">No entries yet. Start writing ↑</div>';
+    return;
+  }
+  histEl.innerHTML = [...state.journalEntries].reverse().map((entry, i) => `
+    <div style="border-bottom:1px solid var(--border); padding:14px 0;">
+      <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--muted); margin-bottom:8px;">${entry.date}</div>
+      ${entry.win ? `<div style="font-size:0.8rem; margin-bottom:4px;"><span style="color:var(--green); font-size:0.65rem; text-transform:uppercase; letter-spacing:1px;">Win · </span>${entry.win}</div>` : ''}
+      ${entry.grateful ? `<div style="font-size:0.8rem; margin-bottom:4px;"><span style="color:var(--accent); font-size:0.65rem; text-transform:uppercase; letter-spacing:1px;">Grateful · </span>${entry.grateful}</div>` : ''}
+      ${entry.notes ? `<div style="font-size:0.78rem; color:var(--muted); line-height:1.6; margin-top:6px; font-style:italic;">${entry.notes}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function saveJournalEntry() {
+  const win = document.getElementById('journal-win').value.trim();
+  const grateful = document.getElementById('journal-grateful').value.trim();
+  const notes = document.getElementById('journal-notes').value.trim();
+  if (!win && !grateful && !notes) return;
+  const date = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  if (!state.journalEntries) state.journalEntries = [];
+  state.journalEntries.push({ date, win, grateful, notes });
+  document.getElementById('journal-win').value = '';
+  document.getElementById('journal-grateful').value = '';
+  document.getElementById('journal-notes').value = '';
+  const msg = document.getElementById('journal-saved-msg');
+  if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 2000); }
+  save(); renderJournal();
+}
+
+// ===== GARMIN =====
+function logGarmin() {
+  const steps = parseInt(document.getElementById('garmin-steps').value) || 0;
+  const sleep = parseFloat(document.getElementById('garmin-sleep').value) || 0;
+  const hrv = parseInt(document.getElementById('garmin-hrv').value) || 0;
+  const burned = parseInt(document.getElementById('garmin-burned').value) || 0;
+  if (!steps && !sleep && !hrv && !burned) return;
+  const date = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  if (!state.garminLog) state.garminLog = [];
+  state.garminLog.push({ date, steps, sleep, hrv, burned });
+  document.getElementById('garmin-steps').value = '';
+  document.getElementById('garmin-sleep').value = '';
+  document.getElementById('garmin-hrv').value = '';
+  document.getElementById('garmin-burned').value = '';
+  save(); render();
+}
+
+function renderGarmin() {
+  // Steps progress bar
+  const lastG = state.garminLog && state.garminLog.length ? state.garminLog[state.garminLog.length - 1] : null;
+  const steps = lastG ? lastG.steps : 0;
+  const stepsPct = Math.min(100, Math.round((steps / 10000) * 100));
+  const stepsBar = document.getElementById('steps-bar');
+  const stepsLbl = document.getElementById('steps-pct-lbl');
+  if (stepsBar) stepsBar.style.width = stepsPct + '%';
+  if (stepsLbl) stepsLbl.textContent = `${steps.toLocaleString()} / 10,000`;
+
+  // History
+  const histEl = document.getElementById('garmin-history');
+  if (!histEl) return;
+  if (!state.garminLog || !state.garminLog.length) {
+    histEl.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);">No entries yet. Log your stats above.</div>';
+    return;
+  }
+  histEl.innerHTML = [...state.garminLog].reverse().map((e, ri) => {
+    const i = state.garminLog.length - 1 - ri;
+    const stepsOk = e.steps >= 10000;
+    return `<div class="task-item" style="align-items:center;">
+      <div class="task-text" style="flex:1;">
+        <span style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">${e.date}</span>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
+          ${e.steps ? `<span style="font-size:0.78rem;color:${stepsOk ? 'var(--green)' : 'var(--text)'};">👟 ${e.steps.toLocaleString()} steps${stepsOk ? ' ✓' : ''}</span>` : ''}
+          ${e.sleep ? `<span style="font-size:0.78rem;color:var(--accent2);">😴 ${e.sleep}h sleep</span>` : ''}
+          ${e.hrv ? `<span style="font-size:0.78rem;color:var(--accent3);">💓 HRV ${e.hrv}</span>` : ''}
+          ${e.burned ? `<span style="font-size:0.78rem;color:var(--accent);">🔥 ${e.burned.toLocaleString()} cal</span>` : ''}
+        </div>
+      </div>
+      <button class="btn small danger" onclick="removeGarminEntry(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeGarminEntry(i) {
+  state.garminLog.splice(i, 1);
+  save(); render();
+}
+
+// ===== GROCERY =====
+const groceryStores = [
+  {
+    id: 'costco',
+    name: 'Costco',
+    color: 'var(--accent2)',
+    items: [
+      { name: 'Kirkland eggs (5 dozen)', note: 'Breakfast — 5 eggs/day', price: 14 },
+      { name: 'Ground beef 80/20 (3 lb)', note: '8oz raw per lunch or dinner', price: 14 },
+      { name: 'Chicken breasts (3 lb)', note: '8oz raw per meal — alternate protein', price: 12 },
+      { name: 'Whole milk (1 gallon)', note: '8 fl oz per use — breakfast + shakes', price: 5 },
+      { name: 'Peanut butter (5 lb jar)', note: '2 tbsp / 32g per snack', price: 10 },
+      { name: 'Greek yogurt (tubs)', note: '1 cup / 227g per morning snack', price: 7 },
+      { name: 'Mixed nuts (large bag)', note: '2oz / 56g per grab & go snack', price: 12 },
+      { name: 'White rice (10 lb bag)', note: '1 cup dry per meal — lunch & dinner', price: 8 },
+      { name: 'Protein powder', note: '2 scoops / 60g per afternoon shake', price: 0 },
+    ]
+  },
+  {
+    id: 'tj',
+    name: "Trader Joe's",
+    color: 'var(--green)',
+    items: [
+      { name: 'Sausage links (2 packs)', note: '4 links per breakfast', price: 8 },
+      { name: 'Salmon fillets (frozen)', note: '8oz raw per dinner — variety', price: 9 },
+      { name: 'Sweet potatoes (bag)', note: '1 medium / 150g per lunch', price: 4 },
+      { name: 'Cottage cheese (2 tubs)', note: '¼ cup / 60g per breakfast', price: 6 },
+      { name: 'Granola', note: '¼ cup / 30g per morning snack', price: 4 },
+      { name: 'Bananas', note: '1 banana / 120g per snack', price: 2 },
+      { name: 'Oats (large bag)', note: '1 cup dry / 90g per evening snack', price: 4 },
+      { name: 'Honey', note: '1 tbsp / 21g per morning snack', price: 3 },
+    ]
+  },
+  {
+    id: 'wf',
+    name: 'Whole Foods (if needed)',
+    color: 'var(--accent3)',
+    items: [
+      { name: 'Honey (small jar)', note: '1 tbsp / 21g per snack', price: 5 },
+      { name: 'String cheese (pack)', note: '2 sticks per grab & go snack', price: 5 },
+    ]
+  }
+];
+
+const GROCERY_BUDGET = 110;
+
+function renderGrocery() {
+  const container = document.getElementById('grocery-list-container');
+  if (!container) return;
+
+  let totalCost = 0;
+  let totalItems = 0;
+  let checkedItems = 0;
+
+  groceryStores.forEach(store => {
+    store.items.forEach((item, idx) => {
+      if (item.price > 0) totalCost += item.price;
+      totalItems++;
+      if (state.groceryChecked[store.id + '-' + idx]) checkedItems++;
+    });
+  });
+
+  const pct = Math.min(100, Math.round((totalCost / GROCERY_BUDGET) * 100));
+  const remaining = GROCERY_BUDGET - totalCost;
+
+  const spentEl = document.getElementById('grocery-spent');
+  const remEl = document.getElementById('grocery-remaining');
+  const barEl = document.getElementById('grocery-budget-bar');
+  const summEl = document.getElementById('grocery-summary');
+  if (spentEl) spentEl.textContent = '$' + totalCost;
+  if (remEl) {
+    remEl.textContent = (remaining >= 0 ? '$' + remaining : '-$' + Math.abs(remaining));
+    remEl.style.color = remaining >= 0 ? 'var(--accent)' : 'var(--red)';
+  }
+  if (barEl) {
+    barEl.style.width = pct + '%';
+    barEl.style.background = remaining < 0 ? 'var(--red)' : 'var(--accent)';
+  }
+  if (summEl) summEl.textContent = checkedItems + ' / ' + totalItems + ' items checked';
+
+  container.innerHTML = groceryStores.map(store => {
+    const itemsHTML = store.items.map((item, idx) => {
+      const key = store.id + '-' + idx;
+      const checked = !!state.groceryChecked[key];
+      return `<div class="task-item" style="cursor:pointer; ${checked ? 'opacity:0.45;' : ''}" onclick="toggleGrocery('${store.id}', ${idx})">
+        <div class="task-check ${checked ? 'checked' : ''}"></div>
+        <div style="flex:1;">
+          <div class="task-text ${checked ? 'done' : ''}">${item.name}</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:2px;">${item.note}</div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--muted); white-space:nowrap;">${item.price > 0 ? '~$' + item.price : 'varies'}</div>
+      </div>`;
+    }).join('');
+
+    const storeCost = store.items.reduce((a, i) => a + i.price, 0);
+    return `<div style="margin-bottom:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:1px; color:${store.color};">${store.name}</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--muted);">~$${storeCost}</div>
+      </div>
+      <div class="card" style="padding:8px 16px;">${itemsHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleGrocery(storeId, idx) {
+  const key = storeId + '-' + idx;
+  state.groceryChecked[key] = !state.groceryChecked[key];
+  save(); renderGrocery();
+}
+
+function resetGrocery() {
+  state.groceryChecked = {};
+  save(); renderGrocery();
+}
+
+function switchTabDirect(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  const btns = document.querySelectorAll('nav button');
+  const tabMap = ['today','workout','nutrition','progress','tasks','finance','journal'];
+  const idx = tabMap.indexOf(id);
+  if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
+  render();
+}
+
+// Enter key support for inputs
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.activeElement.id === 'quick-meal-name' || document.activeElement.id === 'quick-cals' || document.activeElement.id === 'quick-protein') logMeal();
+    if (document.activeElement.id === 'weight-input') logWeight();
+    if (document.activeElement.id === 'gcu-task-input') addTask('gcu');
+    if (document.activeElement.id === 'personal-task-input') addTask('personal');
+    if (document.activeElement.id === 'scripture-input') saveScripture();
+    if (document.activeElement.id === 'exp-name' || document.activeElement.id === 'exp-amount') addExpense();
+  }
+});
+
+// Init
+render();
+</script>
+</body>
+</html>
